@@ -5,8 +5,68 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RGBScopizer"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="600" Width="800">
+
     <Grid>
-        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="200"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <Label>Red:</Label>
+                    <Image x:Name="red_img" Height="255"></Image>
+                </StackPanel>
+                <StackPanel Grid.Column="1">
+                    <Label>Green:</Label>
+                    <Image x:Name="green_img" Height="255"></Image>
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <Label>Blue:</Label>
+                    <Image x:Name="blue_img" Height="255"></Image>
+                </StackPanel>
+            </Grid>
+            <Label>Final Scopized:</Label>
+            <Image x:Name="final_img"></Image>
+        </StackPanel>
+        <StackPanel Grid.Column="1">
+            <WrapPanel>
+                <Label>Red not loaded.</Label>
+                <Button x:Name="loadRed_btn" Click="LoadSrc_btn_Click">Load Red</Button>
+                <Button>Re-Randomize Red</Button>
+            </WrapPanel>
+            <WrapPanel>
+                <Label>Green not loaded.</Label>
+                <Button x:Name="loadGreen_btn" Click="LoadSrc_btn_Click">Load Green</Button>
+                <Button>Re-Randomize Green</Button>
+            </WrapPanel>
+            <WrapPanel>
+                <Label>Blue not loaded.</Label>
+                <Button x:Name="loadBlue_btn" Click="LoadSrc_btn_Click">Load Blue</Button>
+                <Button>Re-Randomize Blue</Button>
+            </WrapPanel>
+            <WrapPanel>
+                <Label>Target Resolution:</Label>
+                <TextBox Text="{Binding TargetWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Label>x</Label>
+                <TextBox Text="{Binding TargetHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </WrapPanel>
+            <WrapPanel>
+                <Label>Max Intensity (iters):</Label>
+                <TextBox Text="{Binding MaxIntensity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </WrapPanel>
+            <WrapPanel>
+                <Label>Source treshold (pixel intensity):</Label>
+                <TextBox Text="{Binding SrcThreshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </WrapPanel>
+            <Button x:Name="btnDewit" Click="BtnDewit_Click">Dew it.</Button>
+            <Button x:Name="btnSave" Click="BtnSave_Click" IsEnabled="False">Save result.</Button>
+        </StackPanel>
     </Grid>
 </Window>
