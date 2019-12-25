@@ -60,6 +60,10 @@
                 <TextBox Text="{Binding MaxIntensity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </WrapPanel>
             <WrapPanel>
+                <Label>Gamma:</Label>
+                <TextBox Text="{Binding Gamma, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </WrapPanel>
+            <WrapPanel>
                 <Label>Source treshold (pixel intensity):</Label>
                 <TextBox Text="{Binding SrcThreshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </WrapPanel>

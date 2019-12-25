@@ -30,9 +30,10 @@ namespace RGBScopizer
         // Parameters
         private int targetWidth = 1920;
         private int targetHeight = 1080;
-        private int targetBitDepth = 8;
-        private int maxIntensity = 3;
+        //private int targetBitDepth = 8;
+        private int maxIntensity = 5;
         private int srcThreshold = 1;
+        private float gamma = 2.2f;
 
         // Blocksize
         // Experiments (based on JPEG)
@@ -77,6 +78,11 @@ namespace RGBScopizer
         {
             get { return blockSizeY; }
             set { blockSizeY = value; }
+        }
+        public float Gamma
+        {
+            get { return gamma; }
+            set { gamma = value; }
         }
 
         // Image Data
@@ -302,7 +308,7 @@ namespace RGBScopizer
                         destX = (int)Math.Round(posX * (width-1));
                         intensity = (int)Math.Round((1-posY) * 255);
 
-                        iterCount = (int)Math.Round(srcIntensityHere / 255 * maxIntensity);
+                        iterCount = (int)Math.Round(Math.Pow(srcIntensityHere / 255,gamma) * maxIntensity);
 
                         // Round down for color subsampling
                         destX = blockSizeX * (int)Math.Floor((float)destX / blockSizeX);
