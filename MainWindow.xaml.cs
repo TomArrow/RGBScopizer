@@ -31,8 +31,16 @@ namespace RGBScopizer
         private int targetWidth = 1920;
         private int targetHeight = 1080;
         private int targetBitDepth = 8;
-        private int maxIntensity = 10;
+        private int maxIntensity = 3;
         private int srcThreshold = 1;
+
+        // Blocksize
+        // Experiments (based on JPEG)
+        // 16x16 is extremely robust at high compression
+        // 4x4 is last one with really good quality at lossless, but falls apart very quick (tested with JPEG, might be better with H264)
+        // 8x8 also falls apart but you can at least still recognize something
+        private int blockSizeX = 4; 
+        private int blockSizeY = 4;
 
         const int B = 0;
         const int G = 1;
@@ -60,6 +68,16 @@ namespace RGBScopizer
             get { return srcThreshold; }
             set { srcThreshold = value; }
         }
+        public int BlockSizeX
+        {
+            get { return blockSizeX; }
+            set { blockSizeX = value; }
+        }
+        public int BlockSizeY
+        {
+            get { return blockSizeY; }
+            set { blockSizeY = value; }
+        }
 
         // Image Data
         private Bitmap redSrc = null, greenSrc = null, blueSrc = null;
@@ -81,6 +99,78 @@ namespace RGBScopizer
                 result.Save(sfd.FileName);
             }
 
+        }
+
+        private void LoadRGB_btn_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "Images (.png,.jpg,.tif,.tiff)|*.png;*.jpg;*.tif;*.tiff";
+
+            if (ofd.ShowDialog() == true)
+            {
+                Bitmap image = (Bitmap) Image.FromFile(ofd.FileName);
+
+                redSrc = new Bitmap(image.Width,image.Height);
+                greenSrc = new Bitmap(image.Width,image.Height);
+                blueSrc = new Bitmap(image.Width,image.Height);
+
+                BitmapData imageBmp = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                BitmapData redBmp = redSrc.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+                BitmapData greenBmp = greenSrc.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+                BitmapData blueBmp = blueSrc.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+
+                byte[] imageData = new byte[imageBmp.Stride * imageBmp.Height];
+                byte[] redData = new byte[redBmp.Stride * redBmp.Height];
+                byte[] greenData = new byte[greenBmp.Stride * greenBmp.Height];
+                byte[] blueData = new byte[blueBmp.Stride * blueBmp.Height];
+
+                Marshal.Copy(imageBmp.Scan0, imageData, 0, imageData.Length);
+                Marshal.Copy(redBmp.Scan0, redData, 0, redData.Length);
+                Marshal.Copy(greenBmp.Scan0, greenData, 0, greenData.Length);
+                Marshal.Copy(blueBmp.Scan0, blueData, 0, blueData.Length);
+
+
+                byte myValueR,myValueG,myValueB,myValueA;
+                for(int x = 0; x < image.Width; x++)
+                {
+                    for (int y = 0; y < image.Height; y++)
+                    {
+
+                        myValueR = imageData[y * imageBmp.Stride + x * 4 + R];
+                        myValueG = imageData[y * imageBmp.Stride + x * 4 + G];
+                        myValueB = imageData[y * imageBmp.Stride + x * 4 + B];
+                        myValueA = imageData[y * imageBmp.Stride + x * 4 + A];
+
+                        redData[y * imageBmp.Stride + x * 4 + R] = myValueR;
+                        redData[y * imageBmp.Stride + x * 4 + G] = myValueR;
+                        redData[y * imageBmp.Stride + x * 4 + B] = myValueR;
+                        redData[y * imageBmp.Stride + x * 4 + A] = myValueA;
+                        greenData[y * imageBmp.Stride + x * 4 + R] = myValueG;
+                        greenData[y * imageBmp.Stride + x * 4 + G] = myValueG;
+                        greenData[y * imageBmp.Stride + x * 4 + B] = myValueG;
+                        greenData[y * imageBmp.Stride + x * 4 + A] = myValueA;
+                        blueData[y * imageBmp.Stride + x * 4 + R] = myValueB;
+                        blueData[y * imageBmp.Stride + x * 4 + G] = myValueB;
+                        blueData[y * imageBmp.Stride + x * 4 + B] = myValueB;
+                        blueData[y * imageBmp.Stride + x * 4 + A] = myValueA;
+                    }
+                }
+
+
+                Marshal.Copy(redData, 0, redBmp.Scan0, redData.Length);
+                Marshal.Copy(greenData, 0, greenBmp.Scan0, greenData.Length);
+                Marshal.Copy(blueData, 0, blueBmp.Scan0, blueData.Length);
+
+                image.Dispose();
+                redSrc.UnlockBits(redBmp);
+                greenSrc.UnlockBits(redBmp);
+                blueSrc.UnlockBits(redBmp);
+
+                red_img.Source = Helpers.BitmapToImageSource(redSrc);
+                green_img.Source = Helpers.BitmapToImageSource(greenSrc);
+                blue_img.Source = Helpers.BitmapToImageSource(blueSrc);
+
+            }
         }
 
         public MainWindow()
@@ -186,6 +276,7 @@ namespace RGBScopizer
             int destX, intensity, destY;
             Random rnd = new Random();
             int iterCount, i;
+            int xC, yC;
             
             float srcIntensityHere;
 
@@ -213,13 +304,36 @@ namespace RGBScopizer
 
                         iterCount = (int)Math.Round(srcIntensityHere / 255 * maxIntensity);
 
+                        // Round down for color subsampling
+                        destX = blockSizeX * (int)Math.Floor((float)destX / blockSizeX);
+
                         for (i = 0; i < iterCount; i++)
                         {
                             // destY is random
                             destY = rnd.Next(0, height - 1);
 
-                            target[destY * stride + destX * 4 + channel] = (byte)intensity;
-                            target[destY * stride + destX * 4 + A] = 255;
+                            int destYpre = destY; // for debugging
+
+                            // Round down for color subsampling
+                            destY = blockSizeY * (int)Math.Floor((float)destY / blockSizeY);
+
+                            for (xC = 0; xC < blockSizeX; xC++)
+                            {
+                                if(destX+xC > width - 1)
+                                {
+                                    continue;
+                                }
+                                for (yC = 0; yC < BlockSizeY; yC++)
+                                {
+                                    if (destY + yC > height - 1)
+                                    {
+                                        continue;
+                                    }
+
+                                    target[(destY + yC) * stride + (destX + xC) * 4 + channel] = (byte)intensity;
+                                    target[(destY + yC) * stride + (destX + xC) * 4 + A] = 255;
+                                }
+                            }
                         }
                     }
                 }

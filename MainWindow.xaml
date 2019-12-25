@@ -39,18 +39,16 @@
             <WrapPanel>
                 <Label>Red not loaded.</Label>
                 <Button x:Name="loadRed_btn" Click="LoadSrc_btn_Click">Load Red</Button>
-                <Button>Re-Randomize Red</Button>
             </WrapPanel>
             <WrapPanel>
                 <Label>Green not loaded.</Label>
                 <Button x:Name="loadGreen_btn" Click="LoadSrc_btn_Click">Load Green</Button>
-                <Button>Re-Randomize Green</Button>
             </WrapPanel>
             <WrapPanel>
                 <Label>Blue not loaded.</Label>
                 <Button x:Name="loadBlue_btn" Click="LoadSrc_btn_Click">Load Blue</Button>
-                <Button>Re-Randomize Blue</Button>
             </WrapPanel>
+            <Button x:Name="loadRGB_btn" Click="LoadRGB_btn_Click">Load RGB from single image</Button>
             <WrapPanel>
                 <Label>Target Resolution:</Label>
                 <TextBox Text="{Binding TargetWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -64,6 +62,12 @@
             <WrapPanel>
                 <Label>Source treshold (pixel intensity):</Label>
                 <TextBox Text="{Binding SrcThreshold, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </WrapPanel>
+            <WrapPanel>
+                <Label>Block Size:</Label>
+                <TextBox Text="{Binding BlockSizeX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Label>x</Label>
+                <TextBox Text="{Binding BlockSizeY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </WrapPanel>
             <Button x:Name="btnDewit" Click="BtnDewit_Click">Dew it.</Button>
             <Button x:Name="btnSave" Click="BtnSave_Click" IsEnabled="False">Save result.</Button>
