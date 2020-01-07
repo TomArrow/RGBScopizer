@@ -88,6 +88,7 @@ namespace RGBScopizer
         // Image Data
         private Bitmap redSrc = null, greenSrc = null, blueSrc = null;
         private Bitmap redResized = null, greenResized = null, blueResized = null;
+        private Bitmap shapeSrc = null;
 
         private void BtnDewit_Click(object sender, RoutedEventArgs e)
         {
@@ -179,6 +180,20 @@ namespace RGBScopizer
             }
         }
 
+        private void LoadShape_btn_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "Images (.png,.jpg,.tif,.tiff)|*.png;*.jpg;*.tif;*.tiff";
+
+            if (ofd.ShowDialog() == true)
+            {
+                Image image = Image.FromFile(ofd.FileName);
+                shapeSrc = (Bitmap)image;
+                shape_img.Source = Helpers.BitmapToImageSource((Bitmap)image);
+
+            }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -259,6 +274,12 @@ namespace RGBScopizer
                 pixels = RGBScopize(pixels, bmpData.Stride, targetWidth, targetHeight, blueResized, B);
             }
 
+            if(shapeSrc != null)
+            {
+                blueResized = new Bitmap(shapeSrc, targetWidth, targetHeight);
+                pixels = RGBShape(pixels, bmpData.Stride, targetWidth, targetHeight, blueResized);
+            }
+
 
             Marshal.Copy(pixels, 0, bmpData.Scan0, pixels.Length);
 
@@ -268,6 +289,79 @@ namespace RGBScopizer
 
             btnSave.IsEnabled = true;
 
+        }
+
+        private byte[] RGBShape(byte[] target, int stride, int width, int height, Bitmap src)
+        {
+            // Copy source data into byte array
+            BitmapData srcBmpData = src.LockBits(new Rectangle(0, 0, src.Width, src.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            byte[] srcData = new byte[srcBmpData.Stride * srcBmpData.Height];
+            Marshal.Copy(srcBmpData.Scan0, srcData, 0, srcData.Length);
+
+            int srcR, srcG, srcB, srcA;
+
+            int[][] columnRed = new int[src.Height][];
+            int[][] columnGreen = new int[src.Height][];
+            int[][] columnBlue = new int[src.Height][];
+
+            int[][] columnRedTarget = new int[src.Height][];
+            int[][] columnGreenTarget = new int[src.Height][];
+            int[][] columnBlueTarget = new int[src.Height][];
+
+            for (int x = 0; x < src.Width; x++)
+            {
+                for (int y = 0; y < src.Height; y++)
+                {
+                    srcR = srcData[y * srcBmpData.Stride + x * 4 + R];
+                    srcG = srcData[y * srcBmpData.Stride + x * 4 + G];
+                    srcB = srcData[y * srcBmpData.Stride + x * 4 + B];
+                    srcA = srcData[y * srcBmpData.Stride + x * 4 + A];
+
+                    
+                    columnRed[y] = new int[]{ srcR,y};
+                    columnGreen[y] = new int[] { srcG,y};
+                    columnBlue[y] = new int[] { srcB, y};
+
+                    columnRedTarget[y] = new int[] { target[y * stride + x * 4 + R], y };
+                    columnGreenTarget[y] = new int[] { target[y * stride + x * 4 + G], y };
+                    columnBlueTarget[y] = new int[] { target[y * stride + x * 4 + B], y };
+                }
+                Helpers.Sort(columnRed, 0);
+                Helpers.Sort(columnGreen, 0);
+                Helpers.Sort(columnBlue, 0);
+                Helpers.Sort(columnRedTarget, 0);
+                Helpers.Sort(columnGreenTarget, 0);
+                Helpers.Sort(columnBlueTarget, 0);
+
+                // I'm looping through height, but really just through the sorted arrays. They just happen to have the same size.
+                int targetPlace, targetColor;
+                for (int notY = 0; notY < src.Height; notY++)
+                {
+                    // Basically we correspond the brightness-ordered pixels in each column. The column belonging to the shape dictates the place, the column belonging to the target the intensity.
+                    targetPlace = columnRed[notY][1];
+                    targetColor = columnRedTarget[notY][0];
+                    target[targetPlace * stride + x * 4 + R] = (byte)targetColor;
+                    target[targetPlace * stride + x * 4 + A] = 255;
+
+                    targetPlace = columnGreen[notY][1];
+                    targetColor = columnGreenTarget[notY][0];
+                    target[targetPlace * stride + x * 4 + G] = (byte)targetColor;
+                    target[targetPlace * stride + x * 4 + A] = 255;
+
+                    targetPlace = columnBlue[notY][1];
+                    targetColor = columnBlueTarget[notY][0];
+                    target[targetPlace * stride + x * 4 + B] = (byte)targetColor;
+                    target[targetPlace * stride + x * 4 + A] = 255;
+                }
+            }
+
+
+
+
+            // Unlock source bitmap again.
+            src.UnlockBits(srcBmpData);
+
+            return target;
         }
 
         private byte[] RGBScopize(byte[] target, int stride, int width, int height, Bitmap src, int channel = R)
@@ -286,9 +380,9 @@ namespace RGBScopizer
             
             float srcIntensityHere;
 
-            for(int x = 0; x < src.Width; x++)
+            for(int y = 0; y < src.Height; y++)
             {
-                for(int y = 0; y < src.Height; y++)
+                for(int x = 0; x < src.Width; x++)
                 {
                     srcR = srcData[y * srcBmpData.Stride + x * 4 + R];
                     srcG = srcData[y * srcBmpData.Stride + x * 4 + G];

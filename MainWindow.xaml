@@ -18,6 +18,7 @@
                     <ColumnDefinition Width="*"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <Label>Red:</Label>
@@ -30,6 +31,10 @@
                 <StackPanel Grid.Column="2">
                     <Label>Blue:</Label>
                     <Image x:Name="blue_img" Height="255"></Image>
+                </StackPanel>
+                <StackPanel Grid.Column="3">
+                    <Label>Shape:</Label>
+                    <Image x:Name="shape_img" Height="255"></Image>
                 </StackPanel>
             </Grid>
             <Label>Final Scopized:</Label>
@@ -49,6 +54,7 @@
                 <Button x:Name="loadBlue_btn" Click="LoadSrc_btn_Click">Load Blue</Button>
             </WrapPanel>
             <Button x:Name="loadRGB_btn" Click="LoadRGB_btn_Click">Load RGB from single image</Button>
+            <Button x:Name="loadShape_btn" Click="LoadShape_btn_Click">Load RGB shape for mimicking</Button>
             <WrapPanel>
                 <Label>Target Resolution:</Label>
                 <TextBox Text="{Binding TargetWidth, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
