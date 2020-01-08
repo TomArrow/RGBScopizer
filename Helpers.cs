@@ -26,8 +26,8 @@ namespace RGBScopizer
                 return input;
             } else
             {
-                Random r = new Random();
-                int elementsToDitchCount = input.Count() - maxCount;
+                //Random r = new Random();
+                /*int elementsToDitchCount = input.Count() - maxCount;
                 int[] elementsToDitch = new int[elementsToDitchCount];
                 int indexToDitch = r.Next(0, input.Count() - 1);
                 for(int i = 0; i < elementsToDitchCount; i++)
@@ -37,16 +37,13 @@ namespace RGBScopizer
                         indexToDitch = r.Next(0, input.Count() - 1);
                     }
                     elementsToDitch[i] = indexToDitch;
-                }
+                }*/
 
                 T[] thinnedArray = new T[maxCount];
-                int newIndex = 0;
-                for(int i=0; i < input.Count(); i++)
+                //int newIndex = 0;
+                for(int i=0; i < maxCount; i++)
                 {
-                    if(!Array.Exists(elementsToDitch, element => element == i))
-                    {
-                        thinnedArray[newIndex++] = input[i];
-                    }
+                    thinnedArray[i] = input[(int)Math.Round(((float)i/(maxCount-1))*(input.Count()-1))];
                 }
                 return thinnedArray;
             }
