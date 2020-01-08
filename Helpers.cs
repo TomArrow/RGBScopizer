@@ -19,6 +19,39 @@ namespace RGBScopizer
             Array.Sort<T[]>(data, (x, y) => comparer.Compare(x[col], y[col]));
         }
 
+        public static T[] ThinArray<T>(T[] input, int maxCount){
+
+            if(input.Count() <= maxCount)
+            {
+                return input;
+            } else
+            {
+                Random r = new Random();
+                int elementsToDitchCount = input.Count() - maxCount;
+                int[] elementsToDitch = new int[elementsToDitchCount];
+                int indexToDitch = r.Next(0, input.Count() - 1);
+                for(int i = 0; i < elementsToDitchCount; i++)
+                {
+                    while(Array.Exists(elementsToDitch, element => element == indexToDitch))
+                    {
+                        indexToDitch = r.Next(0, input.Count() - 1);
+                    }
+                    elementsToDitch[i] = indexToDitch;
+                }
+
+                T[] thinnedArray = new T[maxCount];
+                int newIndex = 0;
+                for(int i=0; i < input.Count(); i++)
+                {
+                    if(!Array.Exists(elementsToDitch, element => element == i))
+                    {
+                        thinnedArray[newIndex++] = input[i];
+                    }
+                }
+                return thinnedArray;
+            }
+        }
+
         static public BitmapImage BitmapToImageSource(Bitmap bitmap)
         {
             using (MemoryStream memory = new MemoryStream())
