@@ -12,6 +12,20 @@ namespace RGBScopizer
     class Helpers
     {
 
+
+        static public Bitmap ResizeBitmapNN(Bitmap sourceBMP, int width, int height)
+        {
+            Bitmap result = new Bitmap(width, height);
+            using (Graphics g = Graphics.FromImage(result))
+            {
+                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+                g.DrawImage(sourceBMP, 0, 0, width, height);
+            }
+            return result;
+        }
+
+
         // from: https://stackoverflow.com/questions/232395/how-do-i-sort-a-two-dimensional-rectangular-array-in-c
         public static void Sort<T>(T[][] data, int col)
         {
@@ -26,21 +40,7 @@ namespace RGBScopizer
                 return input;
             } else
             {
-                //Random r = new Random();
-                /*int elementsToDitchCount = input.Count() - maxCount;
-                int[] elementsToDitch = new int[elementsToDitchCount];
-                int indexToDitch = r.Next(0, input.Count() - 1);
-                for(int i = 0; i < elementsToDitchCount; i++)
-                {
-                    while(Array.Exists(elementsToDitch, element => element == indexToDitch))
-                    {
-                        indexToDitch = r.Next(0, input.Count() - 1);
-                    }
-                    elementsToDitch[i] = indexToDitch;
-                }*/
-
                 T[] thinnedArray = new T[maxCount];
-                //int newIndex = 0;
                 for(int i=0; i < maxCount; i++)
                 {
                     thinnedArray[i] = input[(int)Math.Round(((float)i/(maxCount-1))*(input.Count()-1))];
