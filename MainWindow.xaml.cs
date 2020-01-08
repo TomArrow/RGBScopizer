@@ -17,6 +17,8 @@ using System.Drawing;
 using Microsoft.Win32;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace RGBScopizer
 {
@@ -24,7 +26,7 @@ namespace RGBScopizer
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
 
         // Parameters
@@ -48,7 +50,38 @@ namespace RGBScopizer
         const int R = 2;
         const int A = 3;
 
+        public enum Mode
+        {
+            Random,
+            Ordered,
+            Shape
+        }
+
+        Mode thisMode = Mode.Random;
+
+        private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
         // Data binding for parameter textboxes
+        public Mode ThisMode
+        {
+            get { return thisMode; }
+            set {
+                if (value != thisMode)
+                {
+                    thisMode = value;
+                    NotifyPropertyChanged();
+                }}
+        }
+        public bool shapeRandomizationStage=false;
+
+        public bool ShapeRandomizationStage
+        {
+            get { return shapeRandomizationStage; }
+            set { shapeRandomizationStage = value; }
+        }
         public int TargetHeight
         {
             get { return targetHeight; }
@@ -190,7 +223,8 @@ namespace RGBScopizer
                 Image image = Image.FromFile(ofd.FileName);
                 shapeSrc = (Bitmap)image;
                 shape_img.Source = Helpers.BitmapToImageSource((Bitmap)image);
-
+                shape_radiobtn.IsEnabled = true;
+                ThisMode = Mode.Shape;
             }
         }
 
@@ -263,16 +297,27 @@ namespace RGBScopizer
             {
                 redResized = new Bitmap(redSrc, targetWidth, 255);
                 redColumns = RGBScopizeColumns(bmpData.Stride, targetWidth,targetHeight, redResized, R);
+            } else
+            {
+                redColumns = new int[targetWidth * 255 * 3]; // just empty, who cares.
             }
             if (greenSrc != null)
             {
                 greenResized = new Bitmap(greenSrc, targetWidth, 255);
                 greenColumns = RGBScopizeColumns(bmpData.Stride, targetWidth, targetHeight, greenResized, G);
             }
+            else
+            {
+                greenColumns = new int[targetWidth * 255 * 3]; // just empty, who cares.
+            }
             if (blueSrc != null)
             {
                 blueResized = new Bitmap(blueSrc, targetWidth, 255);
                 blueColumns = RGBScopizeColumns(bmpData.Stride, targetWidth, targetHeight, blueResized, B);
+            }
+            else
+            {
+                blueColumns = new int[targetWidth * 255 * 3]; // just empty, who cares.
             }
             Bitmap shapeResized = shapeSrc == null ? null : new Bitmap(shapeSrc, targetWidth, targetHeight);
             pixels = RGBDrawColumns(pixels, bmpData.Stride, targetWidth, targetHeight, shapeResized, redColumns, greenColumns, blueColumns);
@@ -295,12 +340,18 @@ namespace RGBScopizer
         }
 
 
-        private byte[] RGBDrawColumns(byte[] target, int stride, int width, int height, Bitmap src, int[] redColumns, int[] greenColumns, int[] blueColumns)
+        private byte[] RGBDrawColumns(byte[] target, int stride, int width, int height, Bitmap shape, int[] redColumns, int[] greenColumns, int[] blueColumns)
         {
             // Copy source data into byte array
-            BitmapData srcBmpData = src.LockBits(new Rectangle(0, 0, src.Width, src.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            if(thisMode != Mode.Shape)
+            {
+                shape = new Bitmap(1, 1);
+            }
+            
+            BitmapData srcBmpData = shape.LockBits(new Rectangle(0, 0, shape.Width, shape.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
             byte[] srcData = new byte[srcBmpData.Stride * srcBmpData.Height];
             Marshal.Copy(srcBmpData.Scan0, srcData, 0, srcData.Length);
+            
 
             int srcR, srcG, srcB, srcA;
 
@@ -308,15 +359,17 @@ namespace RGBScopizer
             int[][] columnGreenTarget;
             int[][] columnBlueTarget;
 
-            int[][] columnRed = new int[src.Height][];
-            int[][] columnGreen = new int[src.Height][];
-            int[][] columnBlue = new int[src.Height][];
+            int[][] columnRed = new int[targetHeight][];
+            int[][] columnGreen = new int[targetHeight][];
+            int[][] columnBlue = new int[targetHeight][];
 
             int redCount, greenCount, blueCount;
             int redIndex, greenIndex, blueIndex;
             int countToDraw, valuetoDraw;
 
-            for (int x = 0; x < src.Width; x++)
+            Random r = new Random();
+
+            for (int x = 0; x < targetWidth; x++)
             {
                 redCount = 0;
                 greenCount = 0;
@@ -329,9 +382,9 @@ namespace RGBScopizer
                 // First count total count of pixels to draw
                 for (int y = 0; y < 255; y++)
                 {
-                    redCount += redColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_ACTIVE] == 1 ? redColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_COUNT] : 0;
-                    greenCount += greenColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_ACTIVE] == 1 ? greenColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_COUNT] : 0;
-                    blueCount += blueColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_ACTIVE] == 1 ? blueColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_COUNT] : 0;
+                    redCount += redColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_ACTIVE] == 1 ? redColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_COUNT] : 0;
+                    greenCount += greenColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_ACTIVE] == 1 ? greenColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_COUNT] : 0;
+                    blueCount += blueColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_ACTIVE] == 1 ? blueColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_COUNT] : 0;
                 }
 
                 //Now create arrays
@@ -342,8 +395,8 @@ namespace RGBScopizer
                 for (int y = 0; y < 255; y++)
                 {
                     // Red
-                    countToDraw = redColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_ACTIVE] == 1 ? redColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_COUNT] : 0;
-                    valuetoDraw = redColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_VALUE];
+                    countToDraw = redColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_ACTIVE] == 1 ? redColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_COUNT] : 0;
+                    valuetoDraw = redColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_VALUE];
                     for(int i = 0; i < countToDraw; i++)
                     {
                         columnRedTarget[redIndex] = new int[] { valuetoDraw, redIndex };
@@ -351,8 +404,8 @@ namespace RGBScopizer
                     }
 
                     // Green
-                    countToDraw = greenColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_ACTIVE] == 1 ? greenColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_COUNT] : 0;
-                    valuetoDraw = greenColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_VALUE];
+                    countToDraw = greenColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_ACTIVE] == 1 ? greenColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_COUNT] : 0;
+                    valuetoDraw = greenColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_VALUE];
                     for(int i = 0; i < countToDraw; i++)
                     {
                         columnGreenTarget[greenIndex] = new int[] { valuetoDraw, greenIndex };
@@ -360,50 +413,89 @@ namespace RGBScopizer
                     }
 
                     // Green
-                    countToDraw = blueColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_ACTIVE] == 1 ? blueColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_COUNT] : 0;
-                    valuetoDraw = blueColumns[y * targetWidth * 4 + x * 4 + COLUMNDATA_VALUE];
+                    countToDraw = blueColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_ACTIVE] == 1 ? blueColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_COUNT] : 0;
+                    valuetoDraw = blueColumns[y * targetWidth * 3 + x * 3 + COLUMNDATA_VALUE];
                     for(int i = 0; i < countToDraw; i++)
                     {
                         columnBlueTarget[blueIndex] = new int[] { valuetoDraw, blueIndex };
                         blueIndex++;
                     }
                 }
-
-                for (int y = 0; y < src.Height; y++)
+                if (thisMode == Mode.Shape)
                 {
-                    srcR = srcData[y * srcBmpData.Stride + x * 4 + R];
-                    srcG = srcData[y * srcBmpData.Stride + x * 4 + G];
-                    srcB = srcData[y * srcBmpData.Stride + x * 4 + B];
-                    srcA = srcData[y * srcBmpData.Stride + x * 4 + A];
+                    for (int y = 0; y < targetHeight; y++)
+                    {
+                        srcR = srcData[y * srcBmpData.Stride + x * 4 + R];
+                        srcG = srcData[y * srcBmpData.Stride + x * 4 + G];
+                        srcB = srcData[y * srcBmpData.Stride + x * 4 + B];
+                        srcA = srcData[y * srcBmpData.Stride + x * 4 + A];
 
 
-                    columnRed[y] = new int[] { srcR, y };
-                    columnGreen[y] = new int[] { srcG, y };
-                    columnBlue[y] = new int[] { srcB, y };
+                        columnRed[y] = new int[] { srcR, y };
+                        columnGreen[y] = new int[] { srcG, y };
+                        columnBlue[y] = new int[] { srcB, y };
+
+                    }
+                    if (shapeRandomizationStage)
+                    {
+                        Helpers.Shuffle(r,columnRed);
+                        Helpers.Shuffle(r,columnGreen);
+                        Helpers.Shuffle(r,columnBlue);
+                        Helpers.Shuffle(r, columnRedTarget);
+                        Helpers.Shuffle(r, columnGreenTarget);
+                        Helpers.Shuffle(r, columnBlueTarget);
+                    }
+
+                    Helpers.Sort(columnRed, 0);
+                    Helpers.Sort(columnGreen, 0);
+                    Helpers.Sort(columnBlue, 0);
 
                 }
                 // TODO Option to randomize columns before sorting.
 
-                Helpers.Sort(columnRed, 0);
-                Helpers.Sort(columnGreen, 0);
-                Helpers.Sort(columnBlue, 0);
                 Helpers.Sort(columnRedTarget, 0);
                 Helpers.Sort(columnGreenTarget, 0);
                 Helpers.Sort(columnBlueTarget, 0);
 
-                columnRedTarget = Helpers.ThinArray(columnRedTarget, src.Height);
-                columnGreenTarget = Helpers.ThinArray(columnGreenTarget, src.Height);
-                columnBlueTarget = Helpers.ThinArray(columnBlueTarget, src.Height);
+                
+                columnRedTarget = Helpers.ThinArray(columnRedTarget, targetHeight);
+                columnGreenTarget = Helpers.ThinArray(columnGreenTarget, targetHeight);
+                columnBlueTarget = Helpers.ThinArray(columnBlueTarget, targetHeight);
 
+
+                int[] randomDictionaryR = new int[1];
+                int[] randomDictionaryG = new int[1];
+                int[] randomDictionaryB = new int[1];
+                if (thisMode == Mode.Random)
+                {
+                    randomDictionaryR = Helpers.CreateNumberSequence(targetHeight);
+                    randomDictionaryG = Helpers.CreateNumberSequence(targetHeight);
+                    randomDictionaryB = Helpers.CreateNumberSequence(targetHeight);
+                    Helpers.Shuffle(r, randomDictionaryR);
+                    Helpers.Shuffle(r, randomDictionaryG);
+                    Helpers.Shuffle(r, randomDictionaryB);
+                }
 
                 // I'm looping through height, but really just through the sorted arrays. They just happen to have the same size.
                 int targetPlace, targetColor;
-                for (int notY = 0; notY < src.Height; notY++)
+                for (int notY = 0; notY < targetHeight; notY++)
                 {
                     // Basically we correspond the brightness-ordered pixels in each column. The column belonging to the shape dictates the place, the column belonging to the target the intensity.
                     if(notY < redCount)
                     {
-                        targetPlace = columnRed[notY][1];
+                        switch (thisMode)
+                        {
+                            case Mode.Shape:
+                                targetPlace = columnRed[notY][1];
+                                break;
+                            case Mode.Random:
+                                targetPlace = randomDictionaryR[notY];
+                                break;
+                            case Mode.Ordered:
+                            default:
+                                targetPlace = notY;
+                                break;
+                        }
                         targetColor = columnRedTarget[notY][0];
                         target[targetPlace * stride + x * 4 + R] = (byte)targetColor;
                         target[targetPlace * stride + x * 4 + A] = 255;
@@ -411,14 +503,38 @@ namespace RGBScopizer
 
                     if (notY < greenCount)
                     {
-                        targetPlace = columnGreen[notY][1];
+                        switch (thisMode)
+                        {
+                            case Mode.Shape:
+                                targetPlace = columnGreen[notY][1];
+                                break;
+                            case Mode.Random:
+                                targetPlace = randomDictionaryG[notY];
+                                break;
+                            case Mode.Ordered:
+                            default:
+                                targetPlace = notY;
+                                break;
+                        }
                         targetColor = columnGreenTarget[notY][0];
                         target[targetPlace * stride + x * 4 + G] = (byte)targetColor;
                         target[targetPlace * stride + x * 4 + A] = 255;
                     }
                     if (notY < blueCount)
                     {
-                        targetPlace = columnBlue[notY][1];
+                        switch (thisMode)
+                        {
+                            case Mode.Shape:
+                                targetPlace = columnBlue[notY][1];
+                                break;
+                            case Mode.Random:
+                                targetPlace = randomDictionaryB[notY];
+                                break;
+                            case Mode.Ordered:
+                            default:
+                                targetPlace = notY;
+                                break;
+                        }
                         targetColor = columnBlueTarget[notY][0];
                         target[targetPlace * stride + x * 4 + B] = (byte)targetColor;
                         target[targetPlace * stride + x * 4 + A] = 255;
@@ -430,19 +546,25 @@ namespace RGBScopizer
 
 
             // Unlock source bitmap again.
-            src.UnlockBits(srcBmpData);
+            shape.UnlockBits(srcBmpData);
 
             return target;
         }
 
-        
+        private void BtnTest_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show(shapeRandomizationStage.ToString());
+        }
+
         const int COLUMNDATA_VALUE = 0;
         const int COLUMNDATA_COUNT = 1;
         const int COLUMNDATA_ACTIVE = 2;
 
+        public event PropertyChangedEventHandler PropertyChanged;
+
         private int[] RGBScopizeColumns(int stride, int width, int height, Bitmap src, int channel = R)
         {
-            int[] result = new int[targetWidth*255*4]; // This will be 4 values per pixel. first value is x position, second is actual value, third value is amount of such pixels to draw(intensity), fourth is basically a bool, saying whether the pixel is active (0 or 1)
+            int[] result = new int[targetWidth*255*3]; // This will be 4 values per pixel. first value is x position, second is actual value, third value is amount of such pixels to draw(intensity), fourth is basically a bool, saying whether the pixel is active (0 or 1)
 
             // Copy source data into byte array
             BitmapData srcBmpData = src.LockBits(new Rectangle(0, 0, src.Width, src.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
@@ -479,7 +601,7 @@ namespace RGBScopizer
 
                     iterCount = (int)Math.Round(Math.Pow(srcIntensityHere / 255, gamma) * maxIntensity);
 
-                    offset = y * targetWidth * 4 + x * 4;
+                    offset = y * targetWidth * 3 + x * 3;
                     result[offset + COLUMNDATA_VALUE] = intensity;
                     result[offset + COLUMNDATA_COUNT] = iterCount;
                     result[offset + COLUMNDATA_ACTIVE] = 1;

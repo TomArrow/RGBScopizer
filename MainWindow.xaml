@@ -7,6 +7,9 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="800">
 
+    <Window.Resources>
+        <local:EnumMatchToBooleanConverter x:Key="enumConverter" />
+    </Window.Resources>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"></ColumnDefinition>
@@ -79,7 +82,18 @@
                 <Label>x</Label>
                 <TextBox Text="{Binding BlockSizeY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
             </WrapPanel>
+            <WrapPanel>
+                <Label>Mode:</Label>
+                <RadioButton Content="Random" GroupName="Mode_radio" IsChecked="{Binding Path=ThisMode, Mode=TwoWay,  Converter={StaticResource enumConverter},  ConverterParameter=Random}"  />
+                <RadioButton Content="Ordered" GroupName="Mode_radio" IsChecked="{Binding Path=ThisMode, Mode=TwoWay,  Converter={StaticResource enumConverter},  ConverterParameter=Ordered}"  />
+                <RadioButton Content="Shape" GroupName="Mode_radio" x:Name="shape_radiobtn" IsEnabled="False" IsChecked="{Binding Path=ThisMode, Mode=TwoWay,  Converter={StaticResource enumConverter},  ConverterParameter=Shape}"  />
+            </WrapPanel>
+            <WrapPanel>
+                <Label>Randomization stage (Shape)</Label>
+                <CheckBox IsChecked="{Binding ShapeRandomizationStage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </WrapPanel>
             <Button x:Name="btnDewit" Click="BtnDewit_Click">Dew it.</Button>
+            <Button x:Name="btnTest" Click="BtnTest_Click">Test.</Button>
             <Button x:Name="btnSave" Click="BtnSave_Click" IsEnabled="False">Save result.</Button>
         </StackPanel>
     </Grid>

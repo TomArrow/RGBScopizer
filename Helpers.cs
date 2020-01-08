@@ -9,9 +9,32 @@ using System.Drawing;
 
 namespace RGBScopizer
 {
-    class Helpers
+    static class Helpers
     {
 
+        // Fisher-Yates algorithm AKA the Knuth Shuffle
+        // Found here: https://stackoverflow.com/questions/108819/best-way-to-randomize-an-array-with-net
+        static public void Shuffle<T>(this Random rng, T[] array)
+        {
+            int n = array.Length;
+            while (n > 1)
+            {
+                int k = rng.Next(n--);
+                T temp = array[n];
+                array[n] = array[k];
+                array[k] = temp;
+            }
+        }
+
+        static public int[] CreateNumberSequence(int count)
+        {
+            int[] sequence = new int[count];
+            for(int i = 0; i < count; i++)
+            {
+                sequence[i] = i;
+            }
+            return sequence;
+        }
 
         static public Bitmap ResizeBitmapNN(Bitmap sourceBMP, int width, int height)
         {
