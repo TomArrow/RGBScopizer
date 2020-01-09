@@ -56,6 +56,24 @@ namespace RGBScopizer
             Array.Sort<T[]>(data, (x, y) => comparer.Compare(x[col], y[col]));
         }
 
+
+        // from: https://stackoverflow.com/questions/232395/how-do-i-sort-a-two-dimensional-rectangular-array-in-c
+        // and modified
+        public static void Sort<T>(T[][] data, params int[] cols)
+        {
+            int tmp = 0;
+            Comparer<T> comparer = Comparer<T>.Default;
+            Array.Sort<T[]>(data, (x, y) => {
+                foreach (int col in cols)
+                {
+                    tmp = comparer.Compare(x[col], y[col]);
+                    if (tmp != 0) { return tmp; }
+                }
+                return tmp;
+                });
+        }
+
+
         public static T[] ThinArray<T>(T[] input, int maxCount){
 
             if(input.Count() <= maxCount)

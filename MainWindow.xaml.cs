@@ -82,6 +82,13 @@ namespace RGBScopizer
             get { return shapeRandomizationStage; }
             set { shapeRandomizationStage = value; }
         }
+        public bool shapeSeondOrderStage = false;
+
+        public bool ShapeSeondOrderStage
+        {
+            get { return shapeSeondOrderStage; }
+            set { shapeSeondOrderStage = value; }
+        }
         public int TargetHeight
         {
             get { return targetHeight; }
@@ -446,9 +453,18 @@ namespace RGBScopizer
                         Helpers.Shuffle(r, columnBlueTarget);
                     }
 
-                    Helpers.Sort(columnRed, 0);
-                    Helpers.Sort(columnGreen, 0);
-                    Helpers.Sort(columnBlue, 0);
+                    if (shapeSeondOrderStage)
+                    {
+                        Helpers.Sort(columnRed, 0, 1);
+                        Helpers.Sort(columnGreen, 0, 1);
+                        Helpers.Sort(columnBlue, 0, 1);
+                    }
+                    else
+                    {
+                        Helpers.Sort(columnRed, 0);
+                        Helpers.Sort(columnGreen, 0);
+                        Helpers.Sort(columnBlue, 0);
+                    }
 
                 }
                 // TODO Option to randomize columns before sorting.
