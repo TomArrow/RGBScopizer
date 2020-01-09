@@ -82,7 +82,7 @@ namespace RGBScopizer
             get { return shapeRandomizationStage; }
             set { shapeRandomizationStage = value; }
         }
-        public bool shapeSeondOrderStage = false;
+        public bool shapeSeondOrderStage = true;
 
         public bool ShapeSeondOrderStage
         {
@@ -141,8 +141,11 @@ namespace RGBScopizer
         {
             SaveFileDialog sfd = new SaveFileDialog();
             sfd.Filter = "PNG Image | *.png";
-            if(sfd.ShowDialog() == true)
+            sfd.InitialDirectory = Properties.Settings.Default.LastSaveFolder;
+            if (sfd.ShowDialog() == true)
             {
+                Properties.Settings.Default.LastSaveFolder = Path.GetDirectoryName(sfd.FileName);
+                Properties.Settings.Default.Save();
                 result.Save(sfd.FileName);
             }
 
@@ -152,9 +155,12 @@ namespace RGBScopizer
         {
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.Filter = "Images (.png,.jpg,.tif,.tiff)|*.png;*.jpg;*.tif;*.tiff";
-
+            ofd.InitialDirectory = Properties.Settings.Default.LastRGBSourceFolder;
             if (ofd.ShowDialog() == true)
             {
+                Properties.Settings.Default.LastRGBSourceFolder = Path.GetDirectoryName(ofd.FileName);
+                Properties.Settings.Default.Save();
+
                 Bitmap image = (Bitmap) Image.FromFile(ofd.FileName);
 
                 redSrc = new Bitmap(image.Width,image.Height);
@@ -225,8 +231,12 @@ namespace RGBScopizer
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.Filter = "Images (.png,.jpg,.tif,.tiff)|*.png;*.jpg;*.tif;*.tiff";
 
+            ofd.InitialDirectory = Properties.Settings.Default.LastShapeSourceFolder;
             if (ofd.ShowDialog() == true)
             {
+                Properties.Settings.Default.LastShapeSourceFolder = Path.GetDirectoryName(ofd.FileName);
+                Properties.Settings.Default.Save();
+
                 Image image = Image.FromFile(ofd.FileName);
                 shapeSrc = (Bitmap)image;
                 shape_img.Source = Helpers.BitmapToImageSource((Bitmap)image);
@@ -247,8 +257,12 @@ namespace RGBScopizer
             OpenFileDialog ofd = new OpenFileDialog();
             ofd.Filter = "Images (.png,.jpg,.tif,.tiff)|*.png;*.jpg;*.tif;*.tiff";
 
-            if(ofd.ShowDialog() == true)
+            ofd.InitialDirectory = Properties.Settings.Default.LastChannelSourceFolder;
+            if (ofd.ShowDialog() == true)
             {
+                Properties.Settings.Default.LastChannelSourceFolder = Path.GetDirectoryName(ofd.FileName);
+                Properties.Settings.Default.Save();
+
                 Image image = Image.FromFile(ofd.FileName);
                 switch (((Controls.Button)sender).Name)
                 {
