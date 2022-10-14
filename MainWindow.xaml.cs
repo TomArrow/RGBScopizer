@@ -209,10 +209,13 @@ namespace RGBScopizer
                     }
                 }
 
-
+                imageData = null;
                 Marshal.Copy(redData, 0, redBmp.Scan0, redData.Length);
+                redData = null;
                 Marshal.Copy(greenData, 0, greenBmp.Scan0, greenData.Length);
+                greenData = null;
                 Marshal.Copy(blueData, 0, blueBmp.Scan0, blueData.Length);
+                blueData = null;
 
                 image.Dispose();
                 redSrc.UnlockBits(redBmp);
